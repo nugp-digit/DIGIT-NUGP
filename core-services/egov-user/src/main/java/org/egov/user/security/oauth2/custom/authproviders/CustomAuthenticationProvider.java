@@ -77,7 +77,9 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         String tenantId = details.get("tenantId");
         String userType = details.get("userType");
-
+        String captcha=details.get("captcha");
+        String uuid=details.get("uuid");
+        
         if (isEmpty(tenantId)) {
             throw new OAuth2Exception("TenantId is mandatory");
         }
@@ -99,7 +101,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             org.egov.common.contract.request.User userInfo = org.egov.common.contract.request.User.builder().uuid(user.getUuid())
                     .type(user.getType() != null ? user.getType().name() : null).roles(contract_roles).build();
             requestInfo = RequestInfo.builder().userInfo(userInfo).build();
-            user = encryptionDecryptionUtil.decryptObject(user, "UserSelf", User.class, requestInfo);
+            user = encryptionDecryptionUtil.decryptObject(user, null, User.class, requestInfo);
 
         } catch (UserNotFoundException e) {
             log.error("User not found", e);
@@ -135,9 +137,11 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
                 //for automation allow fixing otp validation to a fixed otp
                 isPasswordMatched = true;
             } else {
+            	userService.validateCaptcha(uuid, captcha);
                 isPasswordMatched = isPasswordMatch(citizenLoginPasswordOtpEnabled, password, user, authentication);
             }
         } else {
+        	userService.validateCaptcha(uuid, captcha);
             isPasswordMatched = isPasswordMatch(employeeLoginPasswordOtpEnabled, password, user, authentication);
         }
 
